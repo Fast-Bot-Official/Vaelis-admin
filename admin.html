@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101116"><title>Vaelis Admin</title>
+<style>
+:root{color-scheme:dark;--bg:#101116;--panel:#191b24;--line:#303342;--text:#f4f4fa;--muted:#a0a5b5;--accent:#a9a5ff;--danger:#ff858c;--good:#78d9b8;font-family:Inter,system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0,#292449 0,transparent 35%),var(--bg);color:var(--text);min-height:100vh}
+main{width:min(1000px,calc(100% - 28px));margin:34px auto}.head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}.brand{font-size:23px;font-weight:850;letter-spacing:-.8px}.brand span{color:var(--accent)}.identity{font-size:12px;color:var(--muted);text-align:right}
+.panel{background:#191b24ed;border:1px solid var(--line);border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 18px 55px #0003}
+h1{font-size:25px;margin:0 0 7px}h2{font-size:17px;margin:0 0 14px}.muted{color:var(--muted);font-size:13px;line-height:1.55}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:grid;gap:6px;color:#c8cad6;font-size:12px}.field input{width:100%;height:42px;border:1px solid #3a3d4c;border-radius:10px;background:#11131a;color:#fff;padding:0 11px;font:inherit;font-size:14px}
+button{border:1px solid #7771ed;background:#7771ed;color:#17152b;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}button.secondary{background:transparent;color:#e3e3ee;border-color:#45485a}button.danger{background:#3a2028;color:#ffc3c7;border-color:#7d414d}button:disabled{opacity:.5;cursor:wait}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row input{flex:1;min-width:180px}.status{min-height:18px;color:var(--accent);font-size:12px;margin-top:10px}.hidden{display:none!important}
+.user-list{display:grid;gap:8px;margin-top:14px}.user{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px;border:1px solid var(--line);border-radius:11px}.user-info{min-width:0}.user-email{font-size:13px;overflow-wrap:anywhere}.user-meta{font-size:10px;color:var(--muted);margin-top:4px}.code-list{display:grid;gap:8px;margin-top:14px}.code{border:1px solid var(--line);background:#12141b;padding:10px;border-radius:10px;font:12px ui-monospace,monospace;overflow-wrap:anywhere}
+#login{max-width:440px;margin:10vh auto}.fine{font-size:11px;color:#777d8d;margin-top:20px}
+@media(max-width:620px){.grid{grid-template-columns:1fr}.head{align-items:flex-start}.panel{padding:16px}.user{align-items:flex-start;flex-direction:column}.identity{max-width:45%}}
+</style>
+</head>
+<body>
+<main>
+  <section id="login" class="panel">
+    <div class="brand">Vaelis <span>Admin</span></div>
+    <h1 style="margin-top:20px">Administrator sign in</h1>
+    <p class="muted">Only the verified administrator account prathameshsinghsingh5@gmail.com can access this console.</p>
+    <label class="field">Email<input id="email" type="email" autocomplete="username" value="prathameshsinghsingh5@gmail.com"></label>
+    <label class="field" style="margin-top:12px">Password<input id="password" type="password" autocomplete="current-password"></label>
+    <div class="row" style="margin-top:14px"><button id="loginBtn">Sign in</button><button id="googleBtn" class="secondary">Continue with Google</button></div>
+    <div class="status" id="loginStatus"></div>
+  </section>
+  <section id="dashboard" class="hidden">
+    <header class="head"><div class="brand">Vaelis <span>Admin</span></div><div class="identity"><div id="adminEmail"></div><button id="logoutBtn" class="secondary" style="margin-top:8px">Sign out</button></div></header>
+    <div class="panel"><h1>Control center</h1><p class="muted">Create Premium redeem codes, assign codes to individual accounts, and manage account access.</p></div>
+    <div class="panel">
+      <h2>Create Premium codes</h2>
+      <div class="grid">
+        <label class="field">Premium duration (days)<input id="duration" type="number" min="1" max="3650" value="2"></label>
+        <label class="field">Code expiry from now (days)<input id="expiry" type="number" min="1" max="3650" value="30"></label>
+        <label class="field">Number of codes<input id="count" type="number" min="1" max="100" value="1"></label>
+        <label class="field">Assign to user UID (optional)<input id="assignUid" type="text" placeholder="Paste a user UID to share directly"></label>
+      </div>
+      <div class="row" style="margin-top:14px"><button id="createBtn">Generate codes</button><span class="muted">Premium time begins only when a code is redeemed.</span></div>
+      <div class="status" id="codeStatus"></div><div class="code-list" id="createdCodes"></div>
+    </div>
+    <div class="panel">
+      <h2>Registered users</h2>
+      <div class="row"><input id="search" type="search" placeholder="Search by email or user UID" style="height:42px;flex:1;min-width:180px;border:1px solid #3a3d4c;border-radius:10px;background:#11131a;color:#fff;padding:0 11px"><button id="searchBtn">Search</button></div>
+      <p class="muted">Searches Firebase Authentication accounts directly. Users who have never opened Vaelis can also appear; their ban status is stored separately.</p>
+      <div class="user-list" id="users"></div><div class="status" id="userStatus"></div>
+    </div>
+    <p class="fine">All privileged actions are validated by the Cloudflare Worker. Hiding this page or changing its HTML does not grant admin access.</p>
+  </section>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script>
+(() => {
+'use strict';
+const firebaseConfig={apiKey:"AIzaSyDs9AIXYDJvBwv8qdElLAc9EcFVFYa6AC4",authDomain:"vaelisagi.firebaseapp.com",projectId:"vaelisagi",storageBucket:"vaelisagi.firebasestorage.app",messagingSenderId:"235980356458",appId:"1:235980356458:web:629cb7e373940113ec8313"};
+const API='https://vaelis-backend.prathameshsinghsingh5.workers.dev', ADMIN='prathameshsinghsingh5@gmail.com';
+const $=id=>document.getElementById(id);let user=null;
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+function showLogin(message=''){ $('login').classList.remove('hidden');$('dashboard').classList.add('hidden');$('loginStatus').textContent=message; }
+function showDashboard(){ $('login').classList.add('hidden');$('dashboard').classList.remove('hidden');$('adminEmail').textContent=user.email; searchUsers(); }
+async function api(path,options={}){if(!user)throw Error('Sign in first.');const token=await user.getIdToken(true);const headers={'Authorization':'Bearer '+token};if(options.body)headers['Content-Type']='application/json';const r=await fetch(API+path,{...options,headers,body:options.body?JSON.stringify(options.body):undefined});let data={};try{data=await r.json()}catch{}if(!r.ok){const e=Error(data.error||'Request failed ('+r.status+')');e.status=r.status;throw e;}return data;}
+async function checkUser(u){if(!u)return;user=u;if((u.email||'').toLowerCase()!==ADMIN||!u.emailVerified){await auth.signOut();user=null;showLogin('Access denied. Sign in with the verified administrator account.');return;}try{await api('/api/profile');showDashboard();}catch(e){await auth.signOut();user=null;showLogin(e.message||'Admin verification failed.');}}
+auth.onAuthStateChanged(checkUser);
+$('loginBtn').onclick=async()=>{ $('loginStatus').textContent='Signing in…';try{await auth.signInWithEmailAndPassword($('email').value.trim(),$('password').value);}catch(e){showLogin(e.message)}};
+$('googleBtn').onclick=async()=>{try{const p=new firebase.auth.GoogleAuthProvider();await auth.signInWithPopup(p);}catch(e){showLogin(e.message)}};
+$('logoutBtn').onclick=()=>auth.signOut();
+$('createBtn').onclick=async()=>{const b=$('createBtn');b.disabled=true;$('codeStatus').textContent='Creating secure codes…';$('createdCodes').replaceChildren();try{const data=await api('/api/admin/codes',{method:'POST',body:{durationDays:Number($('duration').value),expiryDays:Number($('expiry').value),count:Number($('count').value),uid:$('assignUid').value.trim()||null}});$('codeStatus').textContent='Created '+data.codes.length+' code(s).';data.codes.forEach(item=>{const div=document.createElement('div');div.className='code';div.textContent=item.code+' · '+item.durationDays+' days · expires '+new Date(item.expiresAt).toLocaleString();$('createdCodes').appendChild(div);});}catch(e){$('codeStatus').textContent=e.message;}finally{b.disabled=false;}};
+async function searchUsers(){const q=$('search').value.trim();$('userStatus').textContent='Searching…';$('users').replaceChildren();try{const data=await api('/api/admin/users?q='+encodeURIComponent(q));$('userStatus').textContent=data.users.length+' account(s) found.';data.users.forEach(u=>{const row=document.createElement('div');row.className='user';const info=document.createElement('div');info.className='user-info';const email=document.createElement('div');email.className='user-email';email.textContent=u.email||'(no email)';const meta=document.createElement('div');meta.className='user-meta';meta.textContent='UID: '+u.uid+' · Last active: '+(u.lastSeen?new Date(u.lastSeen).toLocaleString():'Unknown')+' · '+(u.banned?'BANNED':u.disabled?'Firebase-disabled':'Active');info.append(email,meta);const actions=document.createElement('div');actions.className='row';const gift=document.createElement('button');gift.textContent='Give 2-day code';gift.onclick=()=>{$('assignUid').value=u.uid;$('duration').value=2;$('count').value=1;$('createBtn').click();window.scrollTo({top:0,behavior:'smooth'});};const ban=document.createElement('button');ban.className=u.banned?'secondary':'danger';ban.textContent=u.banned?'Unban':'Ban';ban.onclick=async()=>{ban.disabled=true;try{await api('/api/admin/users/'+encodeURIComponent(u.uid)+'/'+(u.banned?'unban':'ban'),{method:'POST',body:{}});await searchUsers();}catch(e){$('userStatus').textContent=e.message;ban.disabled=false;}};actions.append(gift,ban);row.append(info,actions);$('users').appendChild(row);});}catch(e){$('userStatus').textContent=e.message;}}
+$('searchBtn').onclick=searchUsers;$('search').addEventListener('keydown',e=>{if(e.key==='Enter')searchUsers();});
+})();
+</script>
+</body></html>
